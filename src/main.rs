@@ -7,9 +7,9 @@ use std::{
     time::Duration
 };
 
-enum Route<'a> {
+enum Route {
     Root,
-    Echo(&'a str),
+    Echo,
     UserAgent,
     NotFound
 }
@@ -50,7 +50,14 @@ fn handle_connection(mut tcp_stream: TcpStream) {
 
         (status_line, content_type, contents) = match route {
             Route::Root => ("HTTP/1.1 200 OK", "", ""),
-            Route::Echo(body) => ("HTTP/1.1 200 OK", "text/plain", body),
+            Route::Echo => {
+                let text = request_line
+                    .strip_prefix("GET /echo/")
+                    .and_then(|s| s.strip_suffix(" HTTP/1.1"))
+                    .unwrap();
+
+                ("HTTP/1.1 200 OK", "text/plain", text)
+            },
             Route::UserAgent => {
                 let user_agent = http_request
                                 .iter()
@@ -74,14 +81,7 @@ fn get_route_type(request_line: &str) -> Route {
     if request_line == "GET / HTTP/1.1" {
         Route::Root
     } else if request_line.starts_with("GET /echo/") && request_line.ends_with(" HTTP/1.1") {
-        let text = request_line
-                    .strip_prefix("GET /echo/")
-                    .and_then(|s| s.strip_suffix(" HTTP/1.1"));
-        
-        match text {
-            Some(body) => Route::Echo(&text),
-            None => Route::NotFound
-        }
+        Route::Echo
     } else if request_line == "GET /user-agent HTTP/1.1" {
         Route::UserAgent
     } else {
