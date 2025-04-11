@@ -52,6 +52,3 @@ impl Worker {
         Worker { id, thread }
     }
 }
-
-struct Job;
-
