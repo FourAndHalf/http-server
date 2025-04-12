@@ -17,10 +17,10 @@ impl ThreadPool {
         let (sender, receiver) = mpsc::channel();
         let receiver = Arc::new(Mutex::new(receiver));
 
-        let mut workers = Vec::with_capacity(size);
+        let mut workers: Vec<Worker> = Vec::with_capacity(size);
 
-        for id in 0..size {
-            workers.push(Worker::new(id, Arc::new(Mutex::new(receiver))));
+        for id: usize in 0..size {
+            workers.push(Worker::new(id, receiver:Arc::new(data: Mutex::new(receiver))));
         }
 
         ThreadPool { workers, sender }

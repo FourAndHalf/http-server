@@ -12,6 +12,7 @@ enum Route {
     Root,
     Echo,
     UserAgent,
+    File,
     NotFound
 }
 
@@ -68,6 +69,20 @@ fn handle_connection(mut tcp_stream: TcpStream) {
                                 .unwrap_or("");
                 ("HTTP/1.1 200 OK", "text/plain", user_agent)
             },
+            Route::File => {
+                let file_name: &str = request_line
+                    .strip_prefix("GET /files/")
+                    .and_then(|s| s.strip_suffix(" HTTP/1.1"))
+                    .unwrap();
+                let full_path: String = format!("{base_path}{file_name}");
+                let content_full_path: &str = &full_path;
+                let path = Path::new(&full_path);
+                if path.exists() && path.is_file() {
+                    ("HTTP/1.1 200 OK", "application/octet", content_full_path)
+                } else {
+                    ("HTTP/1.1 404 Not Found", "", "")
+                }
+            },
             Route::NotFound => ("HTTP/1.1 404 Not Found", "", "")
         };
     } 
@@ -86,6 +101,8 @@ fn get_route_type(request_line: &str) -> Route {
         Route::Echo
     } else if request_line == "GET /user-agent HTTP/1.1" {
         Route::UserAgent
+    } else if request_line.starts_with("GET /files/") && request_line.ends_with(" HTTP/1.1") {
+        Route::File
     } else {
         Route::NotFound
     }
