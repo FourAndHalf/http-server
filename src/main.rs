@@ -16,6 +16,7 @@ enum Route {
     NotFound
 }
 
+
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:4221").unwrap();
     let pool = ThreadPool::new(6);
